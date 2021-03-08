@@ -32,18 +32,17 @@ TODO: Add long description of the pod here.
   s.ios.deployment_target = '9.0'
   s.requires_arc = true
   s.swift_version= '5.0'
-  s.source_files = "Fate/Classes/**/*"
   s.subspec "Logger" do |ls|
-    ls.source_files = "Fate/Classes/Logger"
+    ls.source_files = "Fate/Logger"
   end
   
   s.subspec "Logs" do |ls|
-    ls.source_files = "Fate/Classes/Logs"
+    ls.source_files = "Fate/Logs"
     ls.dependency "XCGLogger", '~> 7.0.0'
   end
   
   s.subspec "RxCocoaHelper" do |rs|
-    rs.source_files = "Fate/Classes/RxCocoahelper"
+    rs.source_files = "Fate/RxCocoahelper"
     rs.dependency "RxSwift"
     rs.dependency "RxCocoa"
     rs.dependency "RxSwiftExt"
@@ -51,18 +50,18 @@ TODO: Add long description of the pod here.
   end
   
   s.subspec "Mediator" do |ms|
-    ms.source_files = "Fate/Classes/Mediator/**/*"
-    ms.public_header_files = "Fate/Classes/Mediator/Supports/*.h"
+    ms.source_files = "Fate/Mediator/**/*"
+    ms.public_header_files = "Fate/Mediator/Supports/*.h"
   end
   
   s.subspec "Autolayout" do |as|
-    as.source_files = "Fate/Classes/Autolayout/**/*"
+    as.source_files = "Fate/Autolayout/**/*"
   end
 #  s.subspec "Ping" do |ps|
-#      ps.source_files = "Fate/Classes/Ping/**/*"
+#      ps.source_files = "Fate/Ping/**/*"
 #  end
   s.subspec "SwiftyPing" do |ss|
-    ss.source_files = "Fate/Classes/SwiftyPing/**/*"
+    ss.source_files = "Fate/SwiftyPing/**/*"
   end
    
 end
