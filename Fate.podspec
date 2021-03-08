@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'Fate'
-  s.version          = '0.1.0'
+  s.version          = '0.1.1'
   s.summary          = 'A short description of Fate.'
 
 # This description is used to generate tags and improve search results.
@@ -30,9 +30,9 @@ TODO: Add long description of the pod here.
 
   s.frameworks = "Foundation"
   s.ios.deployment_target = '9.0'
-  
+  s.requires_arc = true
   s.swift_version= '5.0'
-  
+  s.source_files = "Fate/Classes/**/*"
   s.subspec "Logger" do |ls|
     ls.source_files = "Fate/Classes/Logger"
   end
