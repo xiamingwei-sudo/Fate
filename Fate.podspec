@@ -8,8 +8,8 @@
 
 Pod::Spec.new do |s|
   s.name             = 'Fate'
-  s.version          = '0.1.1'
-  s.summary          = 'A short description of Fate.'
+  s.version          = '0.1.2'
+  s.summary          = '公共组件'
 
 # This description is used to generate tags and improve search results.
 #   * Think: What does it do? Why did you write it? What is the focus?
@@ -18,7 +18,7 @@ Pod::Spec.new do |s|
 #   * Finally, don't worry about the indent, CocoaPods strips it!
 
   s.description      = <<-DESC
-TODO: Add long description of the pod here.
+公共组件库
                        DESC
 
   s.homepage         = 'https://github.com/xiamingwei-sudo/Fate'
@@ -32,17 +32,18 @@ TODO: Add long description of the pod here.
   s.ios.deployment_target = '9.0'
   s.requires_arc = true
   s.swift_version= '5.0'
+ 
   s.subspec "Logger" do |ls|
-    ls.source_files = "Fate/Logger"
+    ls.source_files = "Fate/Classes/Logger"
   end
   
   s.subspec "Logs" do |ls|
-    ls.source_files = "Fate/Logs"
+    ls.source_files = "Fate/Classes/Logs"
     ls.dependency "XCGLogger", '~> 7.0.0'
   end
   
   s.subspec "RxCocoaHelper" do |rs|
-    rs.source_files = "Fate/RxCocoahelper"
+    rs.source_files = "Fate/Classes/RxCocoahelper"
     rs.dependency "RxSwift"
     rs.dependency "RxCocoa"
     rs.dependency "RxSwiftExt"
@@ -50,18 +51,29 @@ TODO: Add long description of the pod here.
   end
   
   s.subspec "Mediator" do |ms|
-    ms.source_files = "Fate/Mediator/**/*"
-    ms.public_header_files = "Fate/Mediator/Supports/*.h"
+    ms.source_files = "Fate/Classes/Mediator/**/*"
+    ms.public_header_files = "Fate/Classes/Mediator/Supports/*.h"
   end
   
   s.subspec "Autolayout" do |as|
-    as.source_files = "Fate/Autolayout/**/*"
+    as.source_files = "Fate/Classes/Autolayout/**/*"
   end
-#  s.subspec "Ping" do |ps|
-#      ps.source_files = "Fate/Ping/**/*"
-#  end
+
   s.subspec "SwiftyPing" do |ss|
-    ss.source_files = "Fate/SwiftyPing/**/*"
+    ss.source_files = "Fate/Classes/SwiftyPing/**/*"
   end
+  s.subspec "AutoInch" do |sa|
+    sa.source_files = "Fate/Classes/AutoInch/**/*"
+  end
+   
+  s.subspec "SwiftyEx" do |sse|
+    sse.source_files = "Fate/Classes/SwiftyEx/**/*"
+  end
+  
+  s.subspec "LocationManager" do |sl|
+    sl.source_files = "Fate/Classes/LocationManager/**/*"
+    sl.public_header_files = "Fate/Classes/LocationManager/*.h"
+  end
+  
    
 end
