@@ -4,7 +4,7 @@
 //
 //  Created by Sami Yrjänheikki on 6.8.2018.
 //  Copyright © 2018 Sami Yrjänheikki. All rights reserved.
-// @github： https://github.com/xiamingwei-sudo/SwiftyPing
+//
 
 import Foundation
 import Darwin
@@ -95,19 +95,19 @@ public class SwiftyPing: NSObject {
     /// Describes the ping host destination.
     public struct Destination {
         /// The host name, can be a IP address or a URL.
-        let host: String
+        public let host: String
         /// IPv4 address of the host.
-        let ipv4Address: Data
+        public let ipv4Address: Data
         /// Socket address of `ipv4Address`.
-        var socketAddress: sockaddr_in? { return ipv4Address.socketAddressInternet }
+        public var socketAddress: sockaddr_in? { return ipv4Address.socketAddressInternet }
         /// IP address of the host.
-        var ip: String? {
+        public var ip: String? {
             guard let address = socketAddress else { return nil }
             return String(cString: inet_ntoa(address.sin_addr), encoding: .ascii)
         }
         
         /// Resolves the `host`.
-        static func getIPv4AddressFromHost(host: String) throws -> Data {
+        public static func getIPv4AddressFromHost(host: String) throws -> Data {
             var streamError = CFStreamError()
             let cfhost = CFHostCreateWithName(nil, host as CFString).takeRetainedValue()
             let status = CFHostStartInfoResolution(cfhost, .addresses, &streamError)
@@ -184,6 +184,7 @@ public class SwiftyPing: NSObject {
         }
     }
     
+    private var erroredIndices = [Int]()
     /// Initializes a pinger.
     /// - Parameter destination: Specifies the host.
     /// - Parameter configuration: A configuration object which can be used to customize pinging behavior.
@@ -271,7 +272,6 @@ public class SwiftyPing: NSObject {
                 let cfdata = Unmanaged<CFData>.fromOpaque(data).takeUnretainedValue()
                 ping?.socket(socket: socket, didReadData: cfdata as Data)
             }
-            
         }, &context)
         
         // Disable SIGPIPE, see issue #15 on GitHub.
@@ -280,6 +280,14 @@ public class SwiftyPing: NSObject {
         let err = setsockopt(handle, SOL_SOCKET, SO_NOSIGPIPE, &value, socklen_t(MemoryLayout.size(ofValue: value)))
         guard err == 0 else {
             throw PingError.socketOptionsSetError(err: err)
+        }
+        
+        // Set TTL
+        if var ttl = configuration.timeToLive {
+            let err = setsockopt(handle, IPPROTO_IP, IP_TTL, &ttl, socklen_t(MemoryLayout.size(ofValue: ttl)))
+            guard err == 0 else {
+                throw PingError.socketOptionsSetError(err: err)
+            }
         }
         
         // ...and add it to the main run loop.
@@ -293,7 +301,10 @@ public class SwiftyPing: NSObject {
             CFRunLoopSourceInvalidate(socketSource)
             socketSource = nil
         }
-        socket = nil
+        if socket != nil {
+            CFSocketInvalidate(socket)
+            socket = nil
+        }
         timeoutTimer?.invalidate()
         timeoutTimer = nil
     }
@@ -354,6 +365,8 @@ public class SwiftyPing: NSObject {
                                                 error: error,
                                                 byteCount: nil,
                                                 ipHeader: nil)
+                   
+                    self.erroredIndices.append(self.sequenceIndex)
                     self.isPinging = false
                     self.informObserver(of: response)
                     
@@ -373,6 +386,7 @@ public class SwiftyPing: NSObject {
                                             error: pingError,
                                             byteCount: nil,
                                             ipHeader: nil)
+                self.erroredIndices.append(self.sequenceIndex)
                 self.isPinging = false
                 self.informObserver(of: response)
                 
@@ -397,6 +411,8 @@ public class SwiftyPing: NSObject {
                                     error: error,
                                     byteCount: nil,
                                     ipHeader: nil)
+        
+        erroredIndices.append(sequenceIndex)
         self.isPinging = false
         informObserver(of: response)
 
@@ -460,6 +476,7 @@ public class SwiftyPing: NSObject {
         isPinging = false
         if resetSequence {
             sequenceIndex = 0
+            erroredIndices.removeAll()
             sequenceStart = nil
         }
     }
@@ -529,17 +546,23 @@ public class SwiftyPing: NSObject {
                                 sequenceNumber: CFSwapInt16HostToBig(sequenceNumber),
                                 payload: fingerprint.uuid)
                 
-        let checksum = try computeChecksum(header: header)
+        let delta = configuration.payloadSize - MemoryLayout<uuid_t>.size
+        var additional = [UInt8]()
+        if delta > 0 {
+            additional = (0..<delta).map { _ in UInt8.random(in: UInt8.min...UInt8.max) }
+        }
+
+        let checksum = try computeChecksum(header: header, additionalPayload: additional)
         header.checksum = checksum
         
-        let package = Data(bytes: &header, count: MemoryLayout<ICMPHeader>.size)
+        let package = Data(bytes: &header, count: MemoryLayout<ICMPHeader>.size) + Data(additional)
         return package
     }
     
-    private func computeChecksum(header: ICMPHeader) throws -> UInt16 {
+    private func computeChecksum(header: ICMPHeader, additionalPayload: [UInt8]) throws -> UInt16 {
         let typecode = Data([header.type, header.code]).withUnsafeBytes { $0.load(as: UInt16.self) }
         var sum = UInt64(typecode) + UInt64(header.identifier) + UInt64(header.sequenceNumber)
-        let payload = convert(payload: header.payload)
+        let payload = convert(payload: header.payload) + additionalPayload
         
         guard payload.count % 2 == 0 else { throw PingError.unexpectedPayloadLength }
         
@@ -583,7 +606,9 @@ public class SwiftyPing: NSObject {
         }
                 
         guard let headerOffset = icmpHeaderOffset(of: data) else { throw PingError.invalidHeaderOffset }
+        let payloadSize = data.count - headerOffset - MemoryLayout<ICMPHeader>.size
         let icmpHeader = data.withUnsafeBytes({ $0.load(fromByteOffset: headerOffset, as: ICMPHeader.self) })
+        let payload = data.subdata(in: (data.count - payloadSize)..<data.count)
         
         let uuid = UUID(uuid: icmpHeader.payload)
         guard uuid == fingerprint else {
@@ -591,7 +616,7 @@ public class SwiftyPing: NSObject {
             return false
         }
 
-        let checksum = try computeChecksum(header: icmpHeader)
+        let checksum = try computeChecksum(header: icmpHeader, additionalPayload: [UInt8](payload))
         
         guard icmpHeader.checksum == checksum else {
             throw PingError.checksumMismatch(received: icmpHeader.checksum, calculated: checksum)
@@ -607,6 +632,10 @@ public class SwiftyPing: NSObject {
         }
         let receivedSequenceIndex = CFSwapInt16BigToHost(icmpHeader.sequenceNumber)
         guard receivedSequenceIndex == sequenceIndex else {
+            if erroredIndices.contains(Int(receivedSequenceIndex)) {
+                // This response either errorred or timed out, ignore it
+                return false
+            }
             throw PingError.invalidSequenceIndex(received: Int(receivedSequenceIndex), expected: sequenceIndex)
         }
         return true
@@ -614,43 +643,43 @@ public class SwiftyPing: NSObject {
 
 }
 
-    // MARK: ICMP
+// MARK: ICMP
 
-    /// Format of IPv4 header
-    public struct IPHeader {
-        var versionAndHeaderLength: UInt8
-        var differentiatedServices: UInt8
-        var totalLength: UInt16
-        var identification: UInt16
-        var flagsAndFragmentOffset: UInt16
-        var timeToLive: UInt8
-        var `protocol`: UInt8
-        var headerChecksum: UInt16
-        var sourceAddress: (UInt8, UInt8, UInt8, UInt8)
-        var destinationAddress: (UInt8, UInt8, UInt8, UInt8)
-    }
+/// Format of IPv4 header
+public struct IPHeader {
+    public var versionAndHeaderLength: UInt8
+    public var differentiatedServices: UInt8
+    public var totalLength: UInt16
+    public var identification: UInt16
+    public var flagsAndFragmentOffset: UInt16
+    public var timeToLive: UInt8
+    public var `protocol`: UInt8
+    public var headerChecksum: UInt16
+    public var sourceAddress: (UInt8, UInt8, UInt8, UInt8)
+    public var destinationAddress: (UInt8, UInt8, UInt8, UInt8)
+}
 
-    /// ICMP header structure
-    private struct ICMPHeader {
-        /// Type of message
-        var type: UInt8
-        /// Type sub code
-        var code: UInt8
-        /// One's complement checksum of struct
-        var checksum: UInt16
-        /// Identifier
-        var identifier: UInt16
-        /// Sequence number
-        var sequenceNumber: UInt16
-        /// UUID payload
-        var payload: uuid_t
-    }
+/// ICMP header structure
+private struct ICMPHeader {
+    /// Type of message
+    var type: UInt8
+    /// Type sub code
+    var code: UInt8
+    /// One's complement checksum of struct
+    var checksum: UInt16
+    /// Identifier
+    var identifier: UInt16
+    /// Sequence number
+    var sequenceNumber: UInt16
+    /// UUID payload
+    var payload: uuid_t
+}
 
-    /// ICMP echo types
-    public enum ICMPType: UInt8 {
-        case EchoReply = 0
-        case EchoRequest = 8
-    }
+/// ICMP echo types
+public enum ICMPType: UInt8 {
+    case EchoReply = 0
+    case EchoRequest = 8
+}
 
 // MARK: - Helpers
 
@@ -674,12 +703,16 @@ public struct PingResponse {
 /// Controls pinging behaviour.
 public struct PingConfiguration {
     /// The time between consecutive pings in seconds.
-    let pingInterval: TimeInterval
+    public let pingInterval: TimeInterval
     /// Timeout interval in seconds.
-    let timeoutInterval: TimeInterval
+    public let timeoutInterval: TimeInterval
     /// If `true`, then `SwiftyPing` will automatically halt and restart the pinging when the app state changes. Only applicable on iOS. If `false`, then the user is responsible for appropriately handling app state changes, see issue #15 on GitHub.
-    var handleBackgroundTransitions = true
-    
+    public var handleBackgroundTransitions = true
+    /// Sets the TTL flag on the socket. All requests sent from the socket will include the TTL field set to this value.
+    public var timeToLive: Int?
+    /// Payload size in bytes. The payload always includes a fingerprint, and a payload size smaller than the fingerprint is ignored. By default, only the fingerprint is included in the payload.
+    public var payloadSize: Int = MemoryLayout<uuid_t>.size
+
     /// Initializes a `PingConfiguration` object with the given parameters.
     /// - Parameter interval: The time between consecutive pings in seconds. Defaults to 1.
     /// - Parameter timeout: Timeout interval in seconds. Defaults to 5.
