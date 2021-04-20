@@ -49,6 +49,7 @@ Pod::Spec.new do |s|
     rs.dependency "RxSwiftExt"
     rs.dependency "MJRefresh"
     rs.dependency "NSObject+Rx"
+    rs.dependency "Fate/Namespacer"
 #    rs.dependency "MWNamespacer"
   end
   
@@ -70,6 +71,7 @@ Pod::Spec.new do |s|
    
   s.subspec "SwiftyEx" do |sse|
     sse.source_files = "Fate/Classes/SwiftyEx/**/*"
+    rs.dependency "Fate/Namespacer"
 #    sse.dependency "MWNamespacer"
   end
   
