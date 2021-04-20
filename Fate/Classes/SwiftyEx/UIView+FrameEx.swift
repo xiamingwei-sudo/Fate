@@ -6,6 +6,9 @@
 //
 
 import Foundation
+#if !COCOAPODS
+import Fate
+#endif
 public extension MWFolDin where Base: UIView {
     var left: CGFloat {
         get { return base.frame.origin.x }

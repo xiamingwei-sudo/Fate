@@ -6,7 +6,9 @@
 //
 
 import Foundation
-
+#if !COCOAPODS
+import Fate
+#endif
 public extension MWFolDin where Base: NSObject {
     /// The class's name
    public class var className: String {

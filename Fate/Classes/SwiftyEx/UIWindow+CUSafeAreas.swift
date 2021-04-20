@@ -7,6 +7,9 @@
 
 import Foundation
 import UIKit
+#if !COCOAPODS
+import Fate
+#endif
 
 fileprivate let kFDFixedStatusBarHeight: CGFloat = 20.0
 fileprivate let kFDFixedPortraitNavigationBarHeight: CGFloat = 44.0

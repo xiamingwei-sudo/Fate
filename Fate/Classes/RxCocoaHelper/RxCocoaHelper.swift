@@ -9,7 +9,9 @@ import Foundation
 import RxSwift
 import RxCocoa
 import RxSwiftExt
-
+#if !COCOAPODS
+import Fate
+#endif
 extension Reactive where Base: UIButton {
 
     /**
