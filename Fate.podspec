@@ -71,7 +71,7 @@ Pod::Spec.new do |s|
    
   s.subspec "SwiftyEx" do |sse|
     sse.source_files = "Fate/Classes/SwiftyEx/**/*"
-    rs.dependency "Fate/Namespacer"
+    sse.dependency "Fate/Namespacer"
 #    sse.dependency "MWNamespacer"
   end
   
