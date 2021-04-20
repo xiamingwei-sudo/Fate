@@ -9,7 +9,6 @@ import Foundation
 import RxSwift
 import RxCocoa
 import RxSwiftExt
-import MWNamespacer
 
 extension Reactive where Base: UIButton {
 

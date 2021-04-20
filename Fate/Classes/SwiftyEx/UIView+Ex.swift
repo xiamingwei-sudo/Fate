@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import MWNamespacer
 
 public extension MWFolDin where Base: NSObject {
     /// The class's name

@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import MWNamespacer
 public extension MWFolDin where Base: UIView {
     var left: CGFloat {
         get { return base.frame.origin.x }

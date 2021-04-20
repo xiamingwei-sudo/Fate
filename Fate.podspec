@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'Fate'
-  s.version          = '0.1.3'
+  s.version          = '0.1.4'
   s.summary          = '公共组件'
 
 # This description is used to generate tags and improve search results.
@@ -18,7 +18,7 @@ Pod::Spec.new do |s|
 #   * Finally, don't worry about the indent, CocoaPods strips it!
 
   s.description      = <<-DESC
-公共组件库
+公共组件库,封装了一些协助开发的公共组件
                        DESC
 
   s.homepage         = 'https://github.com/xiamingwei-sudo/Fate'
@@ -33,7 +33,7 @@ Pod::Spec.new do |s|
   s.requires_arc = true
   s.swift_version= '5.0'
  
-  s.subspec "Logger" do |ls|
+   s.subspec "Logger" do |ls|
     ls.source_files = "Fate/Classes/Logger"
   end
   
@@ -43,11 +43,13 @@ Pod::Spec.new do |s|
   end
   
   s.subspec "RxCocoaHelper" do |rs|
-    rs.source_files = "Fate/Classes/RxCocoahelper"
+    rs.source_files = "Fate/Classes/RxCocoahelper/**/*"
     rs.dependency "RxSwift"
     rs.dependency "RxCocoa"
     rs.dependency "RxSwiftExt"
-    rs.dependency "MWNamespacer"
+    rs.dependency "MJRefresh"
+    rs.dependency "NSObject+Rx"
+#    rs.dependency "MWNamespacer"
   end
   
   s.subspec "Mediator" do |ms|
@@ -68,12 +70,23 @@ Pod::Spec.new do |s|
    
   s.subspec "SwiftyEx" do |sse|
     sse.source_files = "Fate/Classes/SwiftyEx/**/*"
+#    sse.dependency "MWNamespacer"
   end
   
   s.subspec "LocationManager" do |sl|
     sl.source_files = "Fate/Classes/LocationManager/**/*"
     sl.public_header_files = "Fate/Classes/LocationManager/*.h"
   end
+  
+  s.subspec "ObjectExtension" do |oe|
+    oe.source_files = "Fate/Classes/ObjectExtension/**/*"
+    oe.public_header_files = "Fate/Classes/ObjectExtension/*.h"
+    oe.dependency "GTMBase64"
+  end
+  s.subspec "Namespacer" do |oe|
+    oe.source_files = "Fate/Classes/Namespacer/**/*"
+  end
+  
   
    
 end
