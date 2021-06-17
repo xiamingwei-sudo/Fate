@@ -50,7 +50,6 @@ Pod::Spec.new do |s|
     rs.dependency "MJRefresh"
     rs.dependency "NSObject+Rx"
     rs.dependency "Fate/Namespacer"
-#    rs.dependency "MWNamespacer"
   end
   
   s.subspec "Mediator" do |ms|
@@ -72,7 +71,6 @@ Pod::Spec.new do |s|
   s.subspec "SwiftyEx" do |sse|
     sse.source_files = "Fate/Classes/SwiftyEx/**/*"
     sse.dependency "Fate/Namespacer"
-#    sse.dependency "MWNamespacer"
   end
   
   s.subspec "LocationManager" do |sl|
@@ -89,6 +87,12 @@ Pod::Spec.new do |s|
     oe.source_files = "Fate/Classes/Namespacer/**/*"
   end
   
+  s.subspec "MWMBProgressHUD" do |sm|
+    sm.source_files = "Fate/Classes/MWMBProgressHUD/**/*"
+    sm.dependency "MBProgressHUD"
+    sm.dependency "NVActivityIndicatorView"
+    sm.dependency "Fate/RxCocoaHelper"
+  end
   
    
 end

@@ -44,6 +44,17 @@ public extension UIWindow {
 }
 
 public extension UIViewController {
+    
+    /// 判断是否是刘海屏
+    /// - Returns: bool
+    func isLiuhai() -> Bool {
+        if #available(iOS 11.0, *) {
+            return UIDevice.current.userInterfaceIdiom == UIUserInterfaceIdiom.phone && self.cu_saftAreaInsetBottom() > 0
+        }
+        
+        return false
+    }
+    
     func cu_layoutSafeInsetTop() -> CGFloat {
         let statusBarHeight = UIApplication.shared.statusBarFrame.size.height
         var safeAreaInsetTop: CGFloat = 0.0
@@ -52,7 +63,7 @@ public extension UIViewController {
         }
         let interfaceOriention = UIApplication.shared.statusBarOrientation
         let isPortrait: Bool = interfaceOriention.isPortrait
-        return statusBarHeight > 0 ? statusBarHeight: ((safeAreaInsetTop > 0) ? safeAreaInsetTop: (isPortrait ? kFDFixedStatusBarHeight : 0))
+        return statusBarHeight > 0 ? statusBarHeight: ((safeAreaInsetTop > 0) ? safeAreaInsetTop: (isPortrait ? (isLiuhai() ? kFDFixedPortraitNavigationBarHeight : kFDFixedStatusBarHeight) : 0))
     }
     
     func cu_navibarHeight() -> CGFloat {

@@ -76,4 +76,11 @@ public extension Array {
         }
         return nil
     }
+    
+    public func firstIndex(where predicate: (Element) throws -> Bool) rethrows -> Int? {
+        for (index,element) in enumerated() where try predicate(element) {
+            return index
+        }
+        return nil
+    }
 }
